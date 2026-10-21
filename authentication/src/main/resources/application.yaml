@@ -1,3 +1,23 @@
 spring:
   application:
     name: authentication
+
+  datasource:
+    url: jdbc:${POSTGRES_URI}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+
+
+jwt:
+  private-key-path: ${JWT_PRIVATE_KEY_PATH}
+  expiration-ms: ${JWT_EXPIRATION_MS}

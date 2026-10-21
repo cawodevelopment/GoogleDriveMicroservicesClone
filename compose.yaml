@@ -1,0 +1,50 @@
+services:
+  authentication:
+    build:
+      context: ./authentication
+    expose: ["8080"]
+    environment:
+      POSTGRES_URI: postgresql://authentication-db:5432/${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+    volumes:
+      - type: bind
+        source: ../secrets/keys/jwt-private.pem
+        target: /run/secrets/jwt-private.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      authentication-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  authentication-db:
+    image: postgres:16-alpine
+    expose: ["5432"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - authentication_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["80:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - authentication
+    restart: unless-stopped
+
+volumes:
+  authentication_db_data:
