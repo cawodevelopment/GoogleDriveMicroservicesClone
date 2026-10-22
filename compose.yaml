@@ -41,7 +41,7 @@ services:
     image: nginx:1.27-alpine
     ports: ["80:80"]
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - authentication
     restart: unless-stopped
