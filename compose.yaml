@@ -37,6 +37,31 @@ services:
       retries: 10
     restart: unless-stopped
 
+  rate-limiter:
+    build:
+      context: ./ratelimiter
+    expose: [ "8080" ]
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_DATABASE: 0
+      MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS}
+      WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    expose: [ "6379" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   nginx:
     image: nginx:1.27-alpine
     ports: ["80:80"]
