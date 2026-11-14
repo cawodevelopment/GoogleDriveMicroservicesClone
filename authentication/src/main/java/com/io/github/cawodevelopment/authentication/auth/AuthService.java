@@ -6,9 +6,13 @@ import com.io.github.cawodevelopment.authentication.user.User;
 import com.io.github.cawodevelopment.authentication.user.UserRepository;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
+
+import static org.springframework.http.HttpStatus.CONFLICT;
 
 @Service
 public class AuthService {
@@ -24,22 +28,27 @@ public class AuthService {
     }
 
     public String register(AuthRequest request) {
+        String email = normalizeEmail(request.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(CONFLICT, "An account with that email already exists");
+        }
+
         User user = new User();
 
-        user.setEmail(request.email());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setCreatedAt(LocalDateTime.now());
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
         return jwtService.generateToken(
-                new CustomUserDetails(user),
-                userRepository.findIdByEmail(user.getEmail())
+                new CustomUserDetails(savedUser),
+                savedUser.getId()
         );
     }
 
     public String login(AuthRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmail(normalizeEmail(request.email()))
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -48,7 +57,11 @@ public class AuthService {
 
         return jwtService.generateToken(
                 new CustomUserDetails(user),
-                userRepository.findIdByEmail(user.getEmail())
+                user.getId()
         );
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

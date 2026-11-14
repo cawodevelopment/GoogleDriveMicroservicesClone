@@ -1,8 +1,5 @@
 package com.io.github.cawodevelopment.authentication.auth;
 
-import com.io.github.cawodevelopment.authentication.auth.dto.AuthRequest;
-import com.io.github.cawodevelopment.authentication.auth.security.CustomUserDetails;
-import com.io.github.cawodevelopment.authentication.user.UserRepository;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
